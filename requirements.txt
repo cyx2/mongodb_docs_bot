@@ -11,3 +11,4 @@ pymongo
 bs4
 langgraph
 fastapi[standard]
+langgraph-checkpoint-mongodb
