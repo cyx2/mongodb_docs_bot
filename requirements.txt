@@ -10,3 +10,4 @@ langchain_mongodb
 pymongo
 bs4
 langgraph
+fastapi[standard]
