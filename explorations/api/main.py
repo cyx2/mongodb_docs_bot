@@ -19,6 +19,11 @@ class Graph:
         self._initialize_mongodb()
         self._construct_graph()
 
+    class State(TypedDict):
+        question: str
+        context: List[Document]
+        answer: str
+
     def _initialize_mongodb(self):
         load_dotenv()
         mongodb_uri = os.getenv("MONGODB_URI")
@@ -34,17 +39,13 @@ class Graph:
             index_name=prefix,
             relevance_score_fn="cosine",
         )
+        print("MongoDB connection opened. Hello!")
 
     def _initialize_providers(self):
         self.llm = init_chat_model(
             "gemini-2.0-flash-001", model_provider="google_vertexai"
         )
         self.embeddings = VertexAIEmbeddings(model="text-embedding-004")
-
-    class State(TypedDict):
-        question: str
-        context: List[Document]
-        answer: str
 
     def _retrieve(self, state: State):
         retrieved_docs = self.vector_store.similarity_search(state["question"])
@@ -70,17 +71,13 @@ class Graph:
         result = self.graph.invoke({"question": query})
 
         return {
-            "answer": f'Answer: {result["answer"]}\n\n',
-            "context": f'Context: {result["context"]}',
+            "answer": result["answer"],
+            "context": result["context"],
         }
 
-
-app = FastAPI()
-
-
-@app.get("/")
-async def root():
-    return {"message": "hello, traveler"}
+    def shutdown(self):
+        self.client.close()
+        print("MongoDB connection closed. Goodbye!")
 
 
 class Query(BaseModel):
@@ -88,10 +85,24 @@ class Query(BaseModel):
     context: bool
 
 
+def lifespan(app: FastAPI):
+    app.state.graph = Graph()
+
+    yield
+
+    app.state.graph.shutdown()
+
+
+app = FastAPI(lifespan=lifespan)
+
+
+@app.get("/")
+async def root():
+    return {"message": "hello, traveler"}
+
+
 @app.post("/api/query")
 async def api_query(query: Query):
-    graph = Graph()
-
-    result = graph.serve(query.text)
+    result = app.state.graph.serve(query.text)
 
     return result if query.context else {"answer": result["answer"]}
