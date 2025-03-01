@@ -28,7 +28,7 @@ class Graph:
         load_dotenv()
         mongodb_uri = os.getenv("MONGODB_URI")
         mongodb_database = os.getenv("MONGODB_DATABASE")
-        prefix = "loader_explorations"
+        prefix = "scraper_explorations"
 
         self.client = MongoClient(mongodb_uri)
         self.collection = self.client[mongodb_database][prefix]
