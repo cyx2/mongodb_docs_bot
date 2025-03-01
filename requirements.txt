@@ -1,0 +1,12 @@
+jupyterlab
+python-dotenv
+jupyterlab_code_formatter
+black
+isort
+langchain
+langchain_community
+langchain_google_vertexai
+langchain_mongodb
+pymongo
+bs4
+langgraph
